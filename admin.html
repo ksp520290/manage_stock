@@ -418,7 +418,7 @@
     // GitHub Config
     const ghConfig = {
       owner: "",
-      repo: "",
+      repo: "manage_stock",
       branch: "main",
       pat: ""
     };
@@ -443,7 +443,7 @@
 
     function loadLocalConfig() {
       ghConfig.owner = localStorage.getItem('gh_owner') || '';
-      ghConfig.repo = localStorage.getItem('gh_repo') || '';
+      ghConfig.repo = localStorage.getItem('gh_repo') || 'manage_stock';
       ghConfig.branch = localStorage.getItem('gh_branch') || 'main';
       ghConfig.pat = localStorage.getItem('gh_pat') || '';
 
