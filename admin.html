@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>機材管理システム</title>
+  <title>在庫管理システム</title>
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -245,11 +245,11 @@
 <body>
   <header>
     <div class="header-title">
-      <h1>機材管理システム</h1>
+      <h1>在庫管理システム</h1>
       <p>Broadcast Administar </p>
     </div>
     <div class="header-nav">
-      <button class="btn btn-success" id="btnAddFile">新規機材追加</button>
+      <button class="btn btn-success" id="btnAddFile">新規在庫追加</button>
       <button class="btn btn-success" id="btnAddFolder">フォルダ追加</button>
       <button class="btn btn-secondary" id="btnCSVImport">CSVインポート</button>
       <button class="btn btn-secondary" id="btnCSVExport">CSVエクスポート</button>
@@ -355,7 +355,7 @@
       <div class="form-group">
         <label>種別</label>
         <select id="editType" disabled style="background:#f3f4f6;">
-          <option value="file">機材・ファイル</option>
+          <option value="file">在庫・ファイル</option>
           <option value="folder">フォルダ</option>
         </select>
       </div>
@@ -606,7 +606,7 @@
     }
 
     function generateAutoName(type) {
-      const prefix = type === 'folder' ? '新規フォルダ' : '新規機材';
+      const prefix = type === 'folder' ? '新規フォルダ' : '新規在庫';
       const regex = new RegExp(`^${prefix}①|②|③|④|⑤|⑥|⑦|⑧|⑨|⑩|\\d+$`);
       
       const usedNumbers = new Set();
@@ -1228,7 +1228,7 @@
         tr.innerHTML = `
           <td>${node.id}</td>
           <td style="font-weight:600;">${node.type === 'folder' ? '📁 ' : '📄 '}${node.name}</td>
-          <td>${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</td>
+          <td>${node.type === 'folder' ? 'フォルダ' : '在庫/ファイル'}</td>
           <td>${node.type === 'folder' ? '-' : (node.quantity || 1)}</td>
           <td>${parseTags(node.attribute || '')}</td>
           <td>${node.parentId !== null ? node.parentId : 'ルート'}</td>
