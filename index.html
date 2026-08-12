@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>機材管理システム</title>
+  <title>在庫管理システム</title>
   <link rel="manifest" href="manifest.json">
   <style>
     :root {
@@ -203,7 +203,7 @@
 <body>
   <header>
     <div class="header-title">
-      <h1>機材管理システム</h1>
+      <h1>在庫管理システム</h1>
       <p>Broadcast Viewer</p>
     </div>
   </header>
@@ -257,7 +257,7 @@
   <div class="modal-overlay" id="detailModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modalTitle">機材詳細</h3>
+        <h3 id="modalTitle">在庫詳細</h3>
         <button class="modal-close" id="modalClose">&times;</button>
       </div>
       <div class="modal-body" id="modalBody"></div>
@@ -612,7 +612,7 @@
         tr.innerHTML = `
           <td>${node.id}</td>
           <td style="font-weight:600;">${node.type === 'folder' ? '📁 ' : '📄 '}${node.name}</td>
-          <td>${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</td>
+          <td>${node.type === 'folder' ? 'フォルダ' : '在庫/ファイル'}</td>
           <td>${node.type === 'folder' ? '-' : (node.quantity || 1)}</td>
           <td>${parseTags(node.attribute || '')}</td>
           <td>${node.parentId !== null ? node.parentId : 'ルート'}</td>
@@ -667,7 +667,7 @@
       modalBody.innerHTML = `
         ${imgHtml}
         <p><strong>ID:</strong> ${node.id}</p>
-        <p><strong>種別:</strong> ${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</p>
+        <p><strong>種別:</strong> ${node.type === 'folder' ? 'フォルダ' : '在庫/ファイル'}</p>
         <p><strong>配置場所ID:</strong> ${node.parentId !== null ? node.parentId : 'ルート'}</p>
         <p><strong>数量:</strong> ${node.quantity || 1}</p>
         <p><strong>属性:</strong> ${parseTags(node.attribute || '')}</p>
