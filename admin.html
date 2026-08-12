@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>機材管理システム</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --header-bg: #1a2530;
+      --header-text: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #10b981;
+      --success-hover: #059669;
+      --warning: #f59e0b;
+      --warning-hover: #d97706;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-sub: #6b7280;
+      --border-color: #e5e7eb;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 20;
+    }
+    .header-title h1 { font-size: 1.25rem; font-weight: 700; }
+    .header-title p { font-size: 0.75rem; color: #9ca3af; }
+    .header-nav { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .btn {
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      text-decoration: none;
+      color: white;
+    }
+    .btn-primary { background-color: var(--primary); }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    .btn-success { background-color: var(--success); }
+    .btn-success:hover { background-color: var(--success-hover); }
+    .btn-warning { background-color: var(--warning); }
+    .btn-warning:hover { background-color: var(--warning-hover); }
+    .btn-danger { background-color: var(--danger); }
+    .btn-danger:hover { background-color: var(--danger-hover); }
+    .btn-secondary { background-color: #4b5563; }
+    .btn-secondary:hover { background-color: #374151; }
+    
+    .edit-toggle-btn {
+      background-color: #374151;
+      border: 2px solid var(--warning);
+      color: white;
+      font-weight: bold;
+      padding: 0.4rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+    .edit-toggle-btn.active {
+      background-color: var(--warning);
+      color: #000;
+    }
+
+    .toolbar {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 10;
+    }
+    .breadcrumbs { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
+    .crumb-item { color: var(--primary); cursor: pointer; }
+    .crumb-item:hover { text-decoration: underline; }
+    .crumb-sep { color: var(--text-sub); }
+
+    .toolbar-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .search-box input {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.85rem;
+      width: 180px;
+    }
+    .toggle-group { display: flex; border: 1px solid var(--border-color); border-radius: 0.375rem; overflow: hidden; }
+    .toggle-btn {
+      padding: 0.35rem 0.6rem;
+      background: #f3f4f6;
+      border: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+    .toggle-btn.active { background: var(--primary); color: white; font-weight: 600; }
+
+    .app-body { flex: 1; display: flex; overflow: hidden; position: relative; }
+    
+    /* 左サイドバー */
+    .left-sidebar {
+      width: 260px;
+      background-color: var(--card-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .sidebar-section { display: flex; flex-direction: column; gap: 0.5rem; }
+    .sidebar-section h4 { font-size: 0.85rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-main); }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 0.4rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.25rem;
+      font-size: 0.85rem;
+    }
+
+    /* 右サイドバー */
+    .right-sidebar {
+      width: 320px;
+      background-color: var(--card-bg);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      overflow-y: auto;
+      z-index: 15;
+    }
+
+    /* メインエリア */
+    .main-content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+    .view-container { width: 100%; height: 100%; overflow: auto; padding: 1rem; }
+
+    /* 自由配置キャンバス */
+    .canvas-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      background-color: #e5e7eb;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 20px 20px;
+      cursor: grab;
+      user-select: none;
+    }
+    .canvas-viewport:active { cursor: grabbing; }
+    .canvas-world { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+    
+    .node-card {
+      position: absolute;
+      background-color: var(--card-bg);
+      border-radius: 0.5rem;
+      box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      overflow: hidden;
+    }
+    .node-card.selected { border-color: var(--primary) !important; }
+    .node-card.folder-node { background-color: #eff6ff; border-color: #bfdbfe; }
+    .node-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; word-break: break-all; }
+    .node-badge { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 0.25rem; display: inline-block; width: fit-content; }
+    .badge-file { background-color: #e0e7ff; color: #3730a3; }
+    .badge-folder { background-color: #dbeafe; color: #1e40af; }
+
+    /* リサイズハンドル */
+    .resize-handle {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      background: var(--primary);
+      cursor: se-resize;
+      border-top-left-radius: 4px;
+    }
+
+    /* 一覧・グリッド */
+    .grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+    .item-card {
+      background: var(--card-bg);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      border: 1px solid var(--border-color);
+    }
+    .item-card.selected { border-color: var(--primary); }
+    .list-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 0.5rem; overflow: hidden; box-shadow: var(--shadow); }
+    .list-table th, .list-table td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; }
+    .list-table tr:hover { background-color: #f3f4f6; cursor: pointer; }
+    .list-table tr.selected { background-color: #eff6ff; }
+
+    .tag { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.7rem; background: #e5e7eb; margin-right: 0.2rem; }
+    .tag-attr { background: #fef3c7; color: #92400e; }
+
+    /* トースト通知 */
+    .toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 200; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast { background: #1f2937; color: white; padding: 0.75rem 1rem; border-radius: 0.375rem; box-shadow: var(--shadow); font-size: 0.875rem; }
+    .toast.error { background: var(--danger); }
+    .toast.success { background: var(--success); }
+
+    /* 隠しインプット */
+    #csvFileInput { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <h1>機材管理システム</h1>
+      <p>Broadcast Administar </p>
+    </div>
+    <div class="header-nav">
+      <button class="btn btn-success" id="btnAddFile">新規機材追加</button>
+      <button class="btn btn-success" id="btnAddFolder">フォルダ追加</button>
+      <button class="btn btn-secondary" id="btnCSVImport">CSVインポート</button>
+      <button class="btn btn-secondary" id="btnCSVExport">CSVエクスポート</button>
+      <button class="btn btn-warning" id="btnCSVPreview" style="display:none;">一時反映</button>
+      <button class="btn btn-warning" id="btnSaveAll">保存 (GitHub PUT)</button>
+      <button class="btn btn-secondary" id="btnNavModeNormal">通常</button>
+      <button class="btn btn-secondary" id="btnNavModeHistory">履歴</button>
+      <button class="btn btn-secondary" id="btnNavModeTrash">ゴミ箱</button>
+      <button class="edit-toggle-btn" id="btnToggleEdit">編集 OFF</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="breadcrumbs" id="breadcrumbs"></div>
+    <div class="toolbar-controls">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="検索 (名称, 属性, 説明)...">
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnScopeDirect">直下</button>
+        <button class="toggle-btn" id="btnScopeAll">配下</button>
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnModeCanvas">自由配置</button>
+        <button class="toggle-btn" id="btnModeGrid">グリッド</button>
+        <button class="toggle-btn" id="btnModeList">リスト</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- 左サイドバー (GitHub設定・管理者設定) -->
+    <div class="left-sidebar">
+      <div class="sidebar-section">
+        <h4>GitHub REST API 設定</h4>
+        <div class="form-group">
+          <label>Owner (ユーザー/組織)</label>
+          <input type="text" id="ghOwner" placeholder="例: github-user">
+        </div>
+        <div class="form-group">
+          <label>Repository (リポジトリ名)</label>
+          <input type="text" id="ghRepo" value=broadcastGroup_ver.3.0>
+        </div>
+        <div class="form-group">
+          <label>Branch (ブランチ)</label>
+          <input type="text" id="ghBranch" value="main">
+        </div>
+        <div class="form-group">
+          <label>Personal Access Token (PAT)</label>
+          <input type="password" id="ghPat" placeholder="ghp_xxxx...">
+        </div>
+        <button class="btn btn-primary" id="btnSaveConfig" style="margin-top:0.5rem;">設定保存</button>
+      </div>
+      <hr style="border-color: var(--border-color);">
+      <div class="sidebar-section">
+        <h4>システム情報</h4>
+        <p style="font-size: 0.75rem; color: var(--text-sub);">
+          ・PATは`localStorage`に暗号化されず保存されます。<br>
+          ・一時反映はGitHubへ送信されません。「保存」を押すことでコミットされます。
+        </p>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+      <div id="viewCanvas" class="view-container" style="padding:0;">
+        <div class="canvas-viewport" id="canvasViewport">
+          <div class="canvas-world" id="canvasWorld"></div>
+        </div>
+      </div>
+      <div id="viewGrid" class="view-container" style="display:none;">
+        <div class="grid-view" id="gridContainer"></div>
+      </div>
+      <div id="viewList" class="view-container" style="display:none;">
+        <table class="list-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>種別</th>
+              <th>数量</th>
+              <th>属性</th>
+              <th>配置場所ID</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="listTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 右サイドバー (編集UI) -->
+    <div class="right-sidebar" id="rightSidebar" style="display:none;">
+      <h3 id="sidebarTitle">詳細・編集</h3>
+      <div class="form-group">
+        <label>ID</label>
+        <input type="text" id="editId" readonly style="background:#f3f4f6;">
+      </div>
+      <div class="form-group">
+        <label>名称</label>
+        <input type="text" id="editName">
+      </div>
+      <div class="form-group">
+        <label>種別</label>
+        <select id="editType" disabled style="background:#f3f4f6;">
+          <option value="file">機材・ファイル</option>
+          <option value="folder">フォルダ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>数量</label>
+        <input type="number" id="editQuantity" min="0">
+      </div>
+      <div class="form-group">
+        <label>属性 (#タグ)</label>
+        <input type="text" id="editAttribute" placeholder="#音響 #重要">
+      </div>
+      <div class="form-group">
+        <label>配置場所 (近傍フォルダ)</label>
+        <select id="editParentId"></select>
+      </div>
+      <div class="form-group">
+        <label>説明</label>
+        <textarea id="editDescription" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label>画像 (URLまたはファイル名)</label>
+        <input type="text" id="editImage">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+        <div class="form-group"><label>X座標</label><input type="number" id="editX"></div>
+        <div class="form-group"><label>Y座標</label><input type="number" id="editY"></div>
+        <div class="form-group"><label>幅</label><input type="number" id="editW"></div>
+        <div class="form-group"><label>高さ</label><input type="number" id="editH"></div>
+      </div>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn btn-danger" id="btnDeleteItem" style="flex:1;">削除 (ゴミ箱へ)</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="csvFileInput" accept=".csv">
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // 状態管理
+    const state = {
+      persistedNodes: [],
+      draftNodes: [],
+      histories: [],
+      currentParentId: null,
+      selectedNodeId: null,
+      viewMode: "canvas", // canvas, grid, list
+      adminMode: "normal", // normal, trash, history
+      isEditMode: false,
+      scope: "direct",
+      searchQuery: "",
+      scale: 1,
+      panX: 0,
+      panY: 0,
+      isLayoutInteracting: false,
+      filesSha: "",
+      historiesSha: ""
+    };
+
+    // GitHub Config
+    const ghConfig = {
+      owner: "",
+      repo: "",
+      branch: "main",
+      pat: ""
+    };
+
+    // DOM Elements
+    const canvasViewport = document.getElementById('canvasViewport');
+    const canvasWorld = document.getElementById('canvasWorld');
+    const gridContainer = document.getElementById('gridContainer');
+    const listTbody = document.getElementById('listTbody');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const rightSidebar = document.getElementById('rightSidebar');
+    const searchInput = document.getElementById('searchInput');
+    const csvFileInput = document.getElementById('csvFileInput');
+    const btnToggleEdit = document.getElementById('btnToggleEdit');
+
+    async function init() {
+      loadLocalConfig();
+      await loadFromGitHubOrLocal();
+      setupEventListeners();
+      render();
+    }
+
+    function loadLocalConfig() {
+      ghConfig.owner = localStorage.getItem('gh_owner') || '';
+      ghConfig.repo = localStorage.getItem('gh_repo') || '';
+      ghConfig.branch = localStorage.getItem('gh_branch') || 'main';
+      ghConfig.pat = localStorage.getItem('gh_pat') || '';
+
+      document.getElementById('ghOwner').value = ghConfig.owner;
+      document.getElementById('ghRepo').value = ghConfig.repo;
+      document.getElementById('ghBranch').value = ghConfig.branch;
+      document.getElementById('ghPat').value = ghConfig.pat;
+    }
+
+    function saveLocalConfig() {
+      ghConfig.owner = document.getElementById('ghOwner').value.trim();
+      ghConfig.repo = document.getElementById('ghRepo').value.trim();
+      ghConfig.branch = document.getElementById('ghBranch').value.trim();
+      ghConfig.pat = document.getElementById('ghPat').value.trim();
+
+      localStorage.setItem('gh_owner', ghConfig.owner);
+      localStorage.setItem('gh_repo', ghConfig.repo);
+      localStorage.setItem('gh_branch', ghConfig.branch);
+      localStorage.setItem('gh_pat', ghConfig.pat);
+
+      showToast("設定をブラウザに保存しました", "success");
+    }
+
+    async function loadFromGitHubOrLocal() {
+      if (ghConfig.owner && ghConfig.repo && ghConfig.pat) {
+        try {
+          const filesData = await fetchGitHubFile('data/files.json');
+          state.persistedNodes = JSON.parse(filesData.content);
+          state.filesSha = filesData.sha;
+
+          const historiesData = await fetchGitHubFile('data/histories.json');
+          state.histories = JSON.parse(historiesData.content);
+          state.historiesSha = historiesData.sha;
+
+          showToast("GitHubから最新データを取得しました", "success");
+        } catch (e) {
+          console.error("GitHub fetch failed, fallback to local fetch:", e);
+          showToast("GitHubからの取得に失敗したため、ローカルデータを読み込みます", "error");
+          await fetchLocalFallback();
+        }
+      } else {
+        await fetchLocalFallback();
+      }
+      // draftStateにコピー
+      state.draftNodes = JSON.parse(JSON.stringify(state.persistedNodes));
+      cleanOldTrashData();
+    }
+
+    async function fetchLocalFallback() {
+      try {
+        const resF = await fetch('data/files.json');
+        state.persistedNodes = resF.ok ? await resF.json() : [];
+        const resH = await fetch('data/histories.json');
+        state.histories = resH.ok ? await resH.json() : [];
+      } catch (e) {
+        state.persistedNodes = [];
+        state.histories = [];
+      }
+    }
+
+    /* GitHub REST API Utility */
+    async function fetchGitHubFile(path) {
+      const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${path}?ref=${ghConfig.branch}`;
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `token ${ghConfig.pat}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+      const json = await res.json();
+      const content = decodeURIComponent(escape(atob(json.content.replace(/\n/g, ''))));
+      return { content, sha: json.sha };
+    }
+
+    async function putGitHubFile(path, contentStr, sha, message) {
+      const url = `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${path}`;
+    
+      // 1. 引数で sha が渡されていない場合、GitHubから最新の sha を自動取得する
+      let targetSha = sha;
+      if (!targetSha) {
+        try {
+          const getRes = await fetch(`${url}?ref=${ghConfig.branch}`, {
+            headers: {
+              'Authorization': `token ${ghConfig.pat}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          if (getRes.ok) {
+            const fileData = await getRes.json();
+            targetSha = fileData.sha; // GitHub上にある現在のファイルの sha を取得
+          }
+        } catch (e) {
+          console.log("既存ファイルの sha 取得をスキップ（新規作成として処理します）", e);
+        }
+      }
+    
+      // 2. 本文のエンコード（日本語などの文字化け対策）
+      const encodedContent = btoa(unescape(encodeURIComponent(contentStr)));
+    
+      // 3. 送信データの作成
+      const body = {
+        message: message || "Update data",
+        content: encodedContent,
+        branch: ghConfig.branch
+      };
+    
+      // sha が存在する場合は上書き指定としてリクエストに含める
+      if (targetSha) {
+        body.sha = targetSha;
+      }
+    
+      // 4. GitHub API に PUT リクエストを送信
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${ghConfig.pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || `HTTP Error ${res.status}`);
+      }
+    
+      const json = await res.json();
+      return json.content.sha;
+    }
+    /* 30日経過のゴミ箱データ自動削除 */
+    function cleanOldTrashData() {
+      const now = new Date();
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      let hasChanges = false;
+
+      state.draftNodes = state.draftNodes.filter(node => {
+        if (node.deletedAt) {
+          const deletedDate = new Date(node.deletedAt);
+          if (now - deletedDate > thirtyDaysMs) {
+            hasChanges = true;
+            createHistoryRecord("DELETE", node.name, node.id, node, null, "30日経過による自動完全削除");
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (hasChanges) {
+        showToast("30日以上経過したゴミ箱データを完全削除しました", "info");
+      }
+    }
+
+    /* ID採番と名称自動採番 */
+    function getNextId() {
+      const maxPersisted = state.persistedNodes.reduce((max, n) => Math.max(max, n.id || 0), 0);
+      const maxDraft = state.draftNodes.reduce((max, n) => Math.max(max, n.id || 0), 0);
+      return Math.max(maxPersisted, maxDraft) + 1;
+    }
+
+    function generateAutoName(type) {
+      const prefix = type === 'folder' ? '新規フォルダ' : '新規機材';
+      const regex = new RegExp(`^${prefix}①|②|③|④|⑤|⑥|⑦|⑧|⑨|⑩|\\d+$`);
+      
+      const usedNumbers = new Set();
+      state.draftNodes.forEach(n => {
+        if (n.name && n.name.startsWith(prefix)) {
+          const numPart = n.name.replace(prefix, '');
+          const num = parseJapaneseNumber(numPart);
+          if (num) usedNumbers.add(num);
+        }
+      });
+
+      let minNum = 1;
+      while (usedNumbers.has(minNum)) {
+        minNum++;
+      }
+      return `${prefix}${toJapaneseCircleNum(minNum)}`;
+    }
+
+    function toJapaneseCircleNum(num) {
+      const circles = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+      if (num >= 1 && num <= 10) return circles[num - 1];
+      return `(${num})`;
+    }
+
+    function parseJapaneseNumber(str) {
+      const circles = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+      const idx = circles.indexOf(str);
+      if (idx !== -1) return idx + 1;
+      const parsed = parseInt(str.replace(/[()]/g, ''), 10);
+      return isNaN(parsed) ? null : parsed;
+    }
+
+    /* イベントリスナー */
+    function setupEventListeners() {
+      document.getElementById('btnSaveConfig').addEventListener('click', saveLocalConfig);
+
+      // Mode toggles
+      btnToggleEdit.addEventListener('click', () => {
+        state.isEditMode = !state.isEditMode;
+        btnToggleEdit.classList.toggle('active', state.isEditMode);
+        btnToggleEdit.textContent = state.isEditMode ? "編集 ON" : "編集 OFF";
+        if (!state.isEditMode) {
+          state.selectedNodeId = null;
+        }
+        render();
+      });
+
+      document.getElementById('btnModeCanvas').addEventListener('click', () => setViewMode('canvas'));
+      document.getElementById('btnModeGrid').addEventListener('click', () => setViewMode('grid'));
+      document.getElementById('btnModeList').addEventListener('click', () => setViewMode('list'));
+
+      document.getElementById('btnScopeDirect').addEventListener('click', () => setScope('direct'));
+      document.getElementById('btnScopeAll').addEventListener('click', () => setScope('all'));
+
+      document.getElementById('btnNavModeNormal').addEventListener('click', () => {
+        state.adminMode = 'normal';
+        render();
+      });
+      document.getElementById('btnNavModeHistory').addEventListener('click', () => {
+        window.location.href = 'history.html';
+      });
+      document.getElementById('btnNavModeTrash').addEventListener('click', () => {
+        state.adminMode = 'trash';
+        render();
+      });
+
+      // Actions
+      document.getElementById('btnAddFile').addEventListener('click', () => addNewNode('file'));
+      document.getElementById('btnAddFolder').addEventListener('click', () => addNewNode('folder'));
+
+      document.getElementById('btnCSVImport').addEventListener('click', () => csvFileInput.click());
+      csvFileInput.addEventListener('change', handleCSVFileSelect);
+      document.getElementById('btnCSVPreview').addEventListener('click', applyCSVPreview);
+      document.getElementById('btnCSVExport').addEventListener('click', exportCSV);
+
+      document.getElementById('btnSaveAll').addEventListener('click', commitAndSaveToGitHub);
+
+      // Search
+      searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.trim().toLowerCase();
+        render();
+      });
+
+      // Edit sidebar form inputs
+      setupSidebarFormListeners();
+
+      // Canvas panning
+      setupCanvasPanZoom();
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      document.getElementById('btnModeCanvas').classList.toggle('active', mode === 'canvas');
+      document.getElementById('btnModeGrid').classList.toggle('active', mode === 'grid');
+      document.getElementById('btnModeList').classList.toggle('active', mode === 'list');
+
+      document.getElementById('viewCanvas').style.display = mode === 'canvas' ? 'block' : 'none';
+      document.getElementById('viewGrid').style.display = mode === 'grid' ? 'block' : 'none';
+      document.getElementById('viewList').style.display = mode === 'list' ? 'block' : 'none';
+
+      render();
+    }
+
+    function setScope(scope) {
+      state.scope = scope;
+      document.getElementById('btnScopeDirect').classList.toggle('active', scope === 'direct');
+      document.getElementById('btnScopeAll').classList.toggle('active', scope === 'all');
+      render();
+    }
+
+    /* ノード追加・削除 */
+    function addNewNode(type) {
+      const newId = getNextId();
+      const autoName = generateAutoName(type);
+      const newNode = {
+        id: newId,
+        name: autoName,
+        type: type,
+        quantity: type === 'folder' ? 0 : 1,
+        attribute: "",
+        description: "",
+        image: "",
+        parentId: state.currentParentId,
+        x: 50,
+        y: 50,
+        w: 220,
+        h: 140,
+        deletedAt: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      state.draftNodes.push(newNode);
+      createHistoryRecord("CREATE", newNode.name, newNode.id, null, newNode);
+
+      showToast(`${autoName} を追加しました (未保存)`, "info");
+      if (state.isEditMode) {
+        state.selectedNodeId = newId;
+      }
+      render();
+    }
+
+    function deleteSelectedItem() {
+      if (!state.selectedNodeId) return;
+      const node = state.draftNodes.find(n => n.id === state.selectedNodeId);
+      if (!node) return;
+
+      const beforeData = JSON.parse(JSON.stringify(node));
+      node.deletedAt = new Date().toISOString();
+      node.updatedAt = new Date().toISOString();
+
+      // フォルダの場合、配下も論理削除
+      if (node.type === 'folder') {
+        markDescendantsDeleted(node.id, node.deletedAt);
+      }
+
+      createHistoryRecord("DELETE", node.name, node.id, beforeData, node);
+      showToast(`${node.name} をゴミ箱へ移動しました`, "warning");
+      state.selectedNodeId = null;
+      render();
+    }
+
+    function markDescendantsDeleted(folderId, deletedAt) {
+      state.draftNodes.filter(n => n.parentId === folderId).forEach(child => {
+        child.deletedAt = deletedAt;
+        child.updatedAt = deletedAt;
+        if (child.type === 'folder') markDescendantsDeleted(child.id, deletedAt);
+      });
+    }
+
+    function restoreItem(id) {
+      const node = state.draftNodes.find(n => n.id === id);
+      if (!node) return;
+
+      const beforeData = JSON.parse(JSON.stringify(node));
+      node.deletedAt = null;
+      node.updatedAt = new Date().toISOString();
+
+      createHistoryRecord("RESTORE", node.name, node.id, beforeData, node);
+      showToast(`${node.name} を復元しました`, "success");
+      render();
+    }
+
+    /* 右サイドバー編集UIとの同期 */
+    function setupSidebarFormListeners() {
+      const fields = ['editName', 'editQuantity', 'editAttribute', 'editParentId', 'editDescription', 'editImage', 'editX', 'editY', 'editW', 'editH'];
+      fields.forEach(fieldId => {
+        document.getElementById(fieldId).addEventListener('change', updateNodeFromSidebar);
+      });
+
+      document.getElementById('btnDeleteItem').addEventListener('click', deleteSelectedItem);
+    }
+
+    function updateNodeFromSidebar() {
+      if (!state.selectedNodeId || !state.isEditMode) return;
+      const node = state.draftNodes.find(n => n.id === state.selectedNodeId);
+      if (!node) return;
+
+      const beforeData = JSON.parse(JSON.stringify(node));
+
+      node.name = document.getElementById('editName').value.trim();
+      node.quantity = parseInt(document.getElementById('editQuantity').value, 10) || 0;
+      node.attribute = document.getElementById('editAttribute').value.trim();
+      
+      const pIdVal = document.getElementById('editParentId').value;
+      const newParentId = pIdVal === 'null' ? null : parseInt(pIdVal, 10);
+      
+      if (newParentId !== node.parentId) {
+        // 近傍・循環参照チェック
+        if (willCauseCycle(node.id, newParentId)) {
+          showToast("循環参照が発生するため配置場所を変更できません", "error");
+          document.getElementById('editParentId').value = node.parentId === null ? 'null' : node.parentId;
+          return;
+        }
+        node.parentId = newParentId;
+        createHistoryRecord("MOVE", node.name, node.id, { parentId: beforeData.parentId }, { parentId: node.parentId });
+      }
+
+      node.description = document.getElementById('editDescription').value;
+      node.image = document.getElementById('editImage').value.trim();
+      node.x = parseInt(document.getElementById('editX').value, 10) || 0;
+      node.y = parseInt(document.getElementById('editY').value, 10) || 0;
+      node.w = parseInt(document.getElementById('editW').value, 10) || 220;
+      node.h = parseInt(document.getElementById('editH').value, 10) || 140;
+      node.updatedAt = new Date().toISOString();
+
+      createHistoryRecord("UPDATE", node.name, node.id, beforeData, node);
+      render();
+    }
+
+    function willCauseCycle(nodeId, targetParentId) {
+      if (nodeId === targetParentId) return true;
+      let curr = state.draftNodes.find(n => n.id === targetParentId);
+      while (curr) {
+        if (curr.id === nodeId) return true;
+        curr = state.draftNodes.find(n => n.id === curr.parentId);
+      }
+      return false;
+    }
+
+    function updateSidebar() {
+      if (!state.selectedNodeId || !state.isEditMode) {
+        rightSidebar.style.display = 'none';
+        return;
+      }
+
+      const node = state.draftNodes.find(n => n.id === state.selectedNodeId);
+      if (!node) {
+        rightSidebar.style.display = 'none';
+        return;
+      }
+
+      rightSidebar.style.display = 'flex';
+      document.getElementById('sidebarTitle').textContent = `編集: ${node.name}`;
+      document.getElementById('editId').value = node.id;
+      document.getElementById('editName').value = node.name;
+      document.getElementById('editType').value = node.type;
+      document.getElementById('editQuantity').value = node.quantity || 0;
+      document.getElementById('editAttribute').value = node.attribute || '';
+      document.getElementById('editDescription').value = node.description || '';
+      document.getElementById('editImage').value = node.image || '';
+      document.getElementById('editX').value = node.x || 0;
+      document.getElementById('editY').value = node.y || 0;
+      document.getElementById('editW').value = node.w || 220;
+      document.getElementById('editH').value = node.h || 140;
+
+      // 近傍フォルダ選択肢の設定
+      populateNearbyFoldersSelect(node);
+    }
+
+    /* 近傍フォルダ取得 */
+    function populateNearbyFoldersSelect(currentNode) {
+      const select = document.getElementById('editParentId');
+      select.innerHTML = '';
+
+      const rootOpt = document.createElement('option');
+      rootOpt.value = 'null';
+      rootOpt.textContent = 'ルート';
+      select.appendChild(rootOpt);
+
+      const nearbyFolders = getNearbyFolders(currentNode);
+      nearbyFolders.forEach(folder => {
+        const opt = document.createElement('option');
+        opt.value = folder.id;
+        opt.textContent = `📁 ${folder.name} (ID: ${folder.id})`;
+        select.appendChild(opt);
+      });
+
+      select.value = currentNode.parentId === null ? 'null' : currentNode.parentId;
+    }
+
+    function getNearbyFolders(node) {
+      const activeFolders = state.draftNodes.filter(n => n.type === 'folder' && !n.deletedAt && n.id !== node.id);
+      const parentId = node.parentId;
+
+      // 1. 親フォルダ
+      // 2. 現在地と同階層の兄弟フォルダ
+      // 3. 現在地直下の子フォルダ
+      const result = [];
+
+      if (parentId !== null) {
+        const parentFolder = activeFolders.find(n => n.id === parentId);
+        if (parentFolder) result.push(parentFolder);
+      }
+
+      activeFolders.forEach(f => {
+        if (f.parentId === parentId) result.push(f); // 兄弟
+        if (f.parentId === node.id) result.push(f);  // 子
+      });
+
+      // 重複除去
+      return Array.from(new Set(result));
+    }
+
+    /* 描画統括 */
+    function render() {
+      renderBreadcrumbs();
+      updateSidebar();
+
+      let nodes = state.draftNodes;
+      if (state.adminMode === 'trash') {
+        nodes = nodes.filter(n => n.deletedAt !== null);
+      } else {
+        nodes = nodes.filter(n => n.deletedAt === null);
+      }
+
+      if (state.searchQuery) {
+        nodes = nodes.filter(n =>
+          (n.name && n.name.toLowerCase().includes(state.searchQuery)) ||
+          (n.attribute && n.attribute.toLowerCase().includes(state.searchQuery)) ||
+          (n.description && n.description.toLowerCase().includes(state.searchQuery))
+        );
+      } else if (state.adminMode !== 'trash') {
+        if (state.scope === 'direct') {
+          nodes = nodes.filter(n => n.parentId === state.currentParentId);
+        }
+      }
+
+      if (state.viewMode === 'canvas') {
+        renderCanvas(nodes);
+      } else if (state.viewMode === 'grid') {
+        renderGrid(nodes);
+      } else if (state.viewMode === 'list') {
+        renderList(nodes);
+      }
+    }
+
+    function renderBreadcrumbs() {
+      breadcrumbs.innerHTML = '';
+      const rootCrumb = document.createElement('span');
+      rootCrumb.className = 'crumb-item';
+      rootCrumb.textContent = 'ルート';
+      rootCrumb.onclick = () => { state.currentParentId = null; render(); };
+      breadcrumbs.appendChild(rootCrumb);
+
+      if (state.currentParentId !== null) {
+        const path = [];
+        let curr = state.draftNodes.find(n => n.id === state.currentParentId);
+        while (curr) {
+          path.unshift(curr);
+          curr = state.draftNodes.find(n => n.id === curr.parentId);
+        }
+        path.forEach(folder => {
+          const sep = document.createElement('span');
+          sep.className = 'crumb-sep';
+          sep.textContent = '>';
+          breadcrumbs.appendChild(sep);
+
+          const item = document.createElement('span');
+          item.className = 'crumb-item';
+          item.textContent = folder.name;
+          item.onclick = () => { state.currentParentId = folder.id; render(); };
+          breadcrumbs.appendChild(item);
+        });
+      }
+    }
+
+    /* キャンバス描画 (ドラッグ・リサイズ付き) */
+    function renderCanvas(nodes) {
+      canvasWorld.innerHTML = '';
+      // キャンバスは常に現在の親フォルダ直下を表示
+      const canvasNodes = state.draftNodes.filter(n => !n.deletedAt && n.parentId === state.currentParentId);
+
+      canvasNodes.forEach(node => {
+        const el = document.createElement('div');
+        el.className = `node-card ${node.type === 'folder' ? 'folder-node' : ''} ${node.id === state.selectedNodeId ? 'selected' : ''}`;
+        el.style.left = `${node.x || 0}px`;
+        el.style.top = `${node.y || 0}px`;
+        el.style.width = `${node.w || 220}px`;
+        el.style.height = `${node.h || 140}px`;
+
+        const title = document.createElement('div');
+        title.className = 'node-title';
+        title.textContent = node.name;
+
+        const badge = document.createElement('span');
+        badge.className = `node-badge ${node.type === 'folder' ? 'badge-folder' : 'badge-file'}`;
+        badge.textContent = node.type === 'folder' ? 'フォルダ' : `数量: ${node.quantity || 1}`;
+
+        el.appendChild(title);
+        if (node.attribute) {
+          const attr = document.createElement('div');
+          attr.innerHTML = parseTags(node.attribute);
+          el.appendChild(attr);
+        }
+        el.appendChild(badge);
+
+        if (state.isEditMode) {
+          // リサイズハンドル
+          const resizeHandle = document.createElement('div');
+          resizeHandle.className = 'resize-handle';
+          enableNodeResize(resizeHandle, node);
+          el.appendChild(resizeHandle);
+
+          // ドラッグ移動
+          enableNodeDrag(el, node);
+        }
+
+        el.onclick = (e) => {
+          if (state.isLayoutInteracting) return;
+          e.stopPropagation();
+
+          if (state.isEditMode) {
+            state.selectedNodeId = node.id;
+            render();
+          } else {
+            if (node.type === 'folder') {
+              state.currentParentId = node.id;
+              render();
+            }
+          }
+        };
+
+        canvasWorld.appendChild(el);
+      });
+
+      updateCanvasTransform();
+    }
+
+    function enableNodeDrag(el, node) {
+      let isDragging = false;
+      let startX, startY;
+      let initX, initY;
+
+      el.addEventListener('pointerdown', (e) => {
+        if (e.target.classList.contains('resize-handle')) return;
+        isDragging = true;
+        state.isLayoutInteracting = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initX = node.x || 0;
+        initY = node.y || 0;
+        el.setPointerCapture(e.pointerId);
+      });
+
+      el.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = (e.clientX - startX) / state.scale;
+        const dy = (e.clientY - startY) / state.scale;
+        node.x = Math.round(initX + dx);
+        node.y = Math.round(initY + dy);
+        el.style.left = `${node.x}px`;
+        el.style.top = `${node.y}px`;
+
+        if (state.selectedNodeId === node.id) {
+          document.getElementById('editX').value = node.x;
+          document.getElementById('editY').value = node.y;
+        }
+      });
+
+      el.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        setTimeout(() => { state.isLayoutInteracting = false; }, 50);
+        createHistoryRecord("LAYOUT_UPDATE", node.name, node.id, { x: initX, y: initY }, { x: node.x, y: node.y });
+      });
+    }
+
+    function enableNodeResize(handle, node) {
+      let isResizing = false;
+      let startX, startY;
+      let initW, initH;
+
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        state.isLayoutInteracting = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        initW = node.w || 220;
+        initH = node.h || 140;
+        handle.setPointerCapture(e.pointerId);
+      });
+
+      handle.addEventListener('pointermove', (e) => {
+        if (!isResizing) return;
+        const dw = (e.clientX - startX) / state.scale;
+        const dh = (e.clientY - startY) / state.scale;
+        node.w = Math.max(100, Math.round(initW + dw));
+        node.h = Math.max(80, Math.round(initH + dh));
+        
+        const parentCard = handle.parentElement;
+        parentCard.style.width = `${node.w}px`;
+        parentCard.style.height = `${node.h}px`;
+
+        if (state.selectedNodeId === node.id) {
+          document.getElementById('editW').value = node.w;
+          document.getElementById('editH').value = node.h;
+        }
+      });
+
+      handle.addEventListener('pointerup', () => {
+        if (!isResizing) return;
+        isResizing = false;
+        setTimeout(() => { state.isLayoutInteracting = false; }, 50);
+        createHistoryRecord("LAYOUT_UPDATE", node.name, node.id, { w: initW, h: initH }, { w: node.w, h: node.h });
+      });
+    }
+
+    function updateCanvasTransform() {
+      canvasWorld.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.scale})`;
+    }
+
+    function setupCanvasPanZoom() {
+      let isPanning = false;
+      let startX, startY;
+
+      canvasViewport.addEventListener('pointerdown', (e) => {
+        if (e.target !== canvasViewport && e.target !== canvasWorld) return;
+        isPanning = true;
+        startX = e.clientX - state.panX;
+        startY = e.clientY - state.panY;
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        if (!isPanning) return;
+        state.panX = e.clientX - startX;
+        state.panY = e.clientY - startY;
+        updateCanvasTransform();
+      });
+
+      window.addEventListener('pointerup', () => { isPanning = false; });
+
+      canvasViewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = 1.1;
+        let newScale = e.deltaY < 0 ? state.scale * zoomFactor : state.scale / zoomFactor;
+        newScale = Math.min(Math.max(0.25, newScale), 3.0);
+
+        const rect = canvasViewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        state.panX = mouseX - (mouseX - state.panX) * (newScale / state.scale);
+        state.panY = mouseY - (mouseY - state.panY) * (newScale / state.scale);
+        state.scale = newScale;
+        updateCanvasTransform();
+      }, { passive: false });
+    }
+
+    /* グリッド・リスト描画 */
+    function renderGrid(nodes) {
+      gridContainer.innerHTML = '';
+      nodes.forEach(node => {
+        const card = document.createElement('div');
+        card.className = `item-card ${node.id === state.selectedNodeId ? 'selected' : ''}`;
+
+        const title = document.createElement('div');
+        title.style.fontWeight = '700';
+        title.textContent = node.name;
+        card.appendChild(title);
+
+        const meta = document.createElement('div');
+        meta.style.fontSize = '0.8rem';
+        meta.style.color = 'var(--text-sub)';
+        meta.textContent = node.type === 'folder' ? '[フォルダ]' : `数量: ${node.quantity || 1}`;
+        card.appendChild(meta);
+
+        if (node.attribute) {
+          const attr = document.createElement('div');
+          attr.innerHTML = parseTags(node.attribute);
+          card.appendChild(attr);
+        }
+
+        if (state.adminMode === 'trash') {
+          const btnRestore = document.createElement('button');
+          btnRestore.className = 'btn btn-success';
+          btnRestore.style.fontSize = '0.75rem';
+          btnRestore.textContent = '復元';
+          btnRestore.onclick = (e) => { e.stopPropagation(); restoreItem(node.id); };
+          card.appendChild(btnRestore);
+        }
+
+        card.onclick = () => {
+          if (state.isEditMode) {
+            state.selectedNodeId = node.id;
+            render();
+          } else if (node.type === 'folder' && state.adminMode !== 'trash') {
+            state.currentParentId = node.id;
+            render();
+          }
+        };
+
+        gridContainer.appendChild(card);
+      });
+    }
+
+    function renderList(nodes) {
+      listTbody.innerHTML = '';
+      nodes.forEach(node => {
+        const tr = document.createElement('tr');
+        if (node.id === state.selectedNodeId) tr.className = 'selected';
+
+        let actionHtml = '';
+        if (state.adminMode === 'trash') {
+          actionHtml = `<button class="btn btn-success" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="event.stopPropagation(); restoreItem(${node.id})">復元</button>`;
+        }
+
+        tr.innerHTML = `
+          <td>${node.id}</td>
+          <td style="font-weight:600;">${node.type === 'folder' ? '📁 ' : '📄 '}${node.name}</td>
+          <td>${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</td>
+          <td>${node.type === 'folder' ? '-' : (node.quantity || 1)}</td>
+          <td>${parseTags(node.attribute || '')}</td>
+          <td>${node.parentId !== null ? node.parentId : 'ルート'}</td>
+          <td>${actionHtml}</td>
+        `;
+
+        tr.onclick = () => {
+          if (state.isEditMode) {
+            state.selectedNodeId = node.id;
+            render();
+          } else if (node.type === 'folder' && state.adminMode !== 'trash') {
+            state.currentParentId = node.id;
+            render();
+          }
+        };
+
+        listTbody.appendChild(tr);
+      });
+    }
+
+    /* CSV Import / Export */
+    function handleCSVFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          parseCSVContent(evt.target.result);
+        } catch (err) {
+          showToast(`CSV解析エラー: ${err.message}`, "error");
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+      csvFileInput.value = '';
+    }
+
+    function parseCSVContent(csvText) {
+      const lines = csvText.split(/\r\n|\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) throw new Error("CSVデータが空かヘッダーがありません");
+
+      const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const parsedItems = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        if (cols.length < 2) continue;
+
+        const row = {};
+        header.forEach((h, idx) => { row[h] = cols[idx] || ''; });
+
+        parsedItems.push(row);
+      }
+
+      // 一時反映用データに読み込み
+      state.csvParsedData = parsedItems;
+      document.getElementById('btnCSVPreview').style.display = 'inline-flex';
+      showToast(`${parsedItems.length}件のCSVデータを準備しました。「一時反映」を押すと画面に表示されます`, "info");
+    }
+
+    function applyCSVPreview() {
+      if (!state.csvParsedData) return;
+
+      const folderMap = new Map(); // 旧形式パス用キャッシュ
+      let nextId = getNextId();
+
+      state.csvParsedData.forEach(row => {
+        const idVal = row["ID"] ? parseInt(row["ID"], 10) : nextId++;
+        const name = row["名前"] || generateAutoName(row["種類"]);
+        const type = row["種類"] === 'folder' ? 'folder' : 'file';
+        const quantity = parseInt(row["数量"], 10) || (type === 'folder' ? 0 : 1);
+        const attribute = row["属性"] || '';
+        const description = row["説明"] || '';
+        const image = row["画像"] || '';
+        const locationVal = row["配置場所"] || '';
+        const x = parseInt(row["X座標"], 10) || 0;
+        const y = parseInt(row["Y座標"], 10) || 0;
+        const w = parseInt(row["幅"], 10) || 220;
+        const h = parseInt(row["高さ"], 10) || 140;
+
+        // parentId 判定ルール
+        let parentId = null;
+        if (/^\d+$/.test(locationVal)) {
+          parentId = parseInt(locationVal, 10);
+        } else if (locationVal && !['','/','root','ルート'].includes(locationVal.toLowerCase())) {
+          // パス指定の場合はフォルダ自動生成/検索
+          parentId = resolveFolderPath(locationVal, folderMap);
+        }
+
+        const existingIdx = state.draftNodes.findIndex(n => n.id === idVal);
+        const nodeObj = {
+          id: idVal,
+          name,
+          type,
+          quantity,
+          attribute,
+          description,
+          image,
+          parentId,
+          x,
+          y,
+          w,
+          h,
+          deletedAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (existingIdx !== -1) {
+          state.draftNodes[existingIdx] = nodeObj;
+        } else {
+          state.draftNodes.push(nodeObj);
+        }
+      });
+
+      createHistoryRecord("IMPORT", "CSV一括インポート", null, null, { count: state.csvParsedData.length });
+      document.getElementById('btnCSVPreview').style.display = 'none';
+      state.csvParsedData = null;
+      showToast("CSVを一時反映しました (GitHub未保存)", "success");
+      render();
+    }
+
+    function resolveFolderPath(pathStr, folderMap) {
+      const parts = pathStr.split('/').filter(p => p.length > 0);
+      let currentParent = null;
+
+      parts.forEach(part => {
+        const key = `${currentParent}_${part}`;
+        if (folderMap.has(key)) {
+          currentParent = folderMap.get(key);
+        } else {
+          let existing = state.draftNodes.find(n => n.type === 'folder' && n.parentId === currentParent && n.name === part && !n.deletedAt);
+          if (!existing) {
+            const newFId = getNextId();
+            existing = {
+              id: newFId,
+              name: part,
+              type: 'folder',
+              quantity: 0,
+              attribute: '',
+              description: '',
+              image: '',
+              parentId: currentParent,
+              x: 0, y: 0, w: 220, h: 140,
+              deletedAt: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            state.draftNodes.push(existing);
+          }
+          folderMap.set(key, existing.id);
+          currentParent = existing.id;
+        }
+      });
+
+      return currentParent;
+    }
+
+    function exportCSV() {
+      const activeNodes = state.draftNodes.filter(n => !n.deletedAt);
+      const headers = ["ID", "名前", "種類", "数量", "属性", "説明", "画像", "配置場所", "X座標", "Y座標", "幅", "高さ"];
+      
+      const rows = activeNodes.map(n => [
+        n.id,
+        `"${(n.name||'').replace(/"/g, '""')}"`,
+        n.type,
+        n.quantity || 0,
+        `"${(n.attribute||'').replace(/"/g, '""')}"`,
+        `"${(n.description||'').replace(/"/g, '""')}"`,
+        `"${(n.image||'').replace(/"/g, '""')}"`,
+        n.parentId !== null ? n.parentId : '',
+        n.x || 0,
+        n.y || 0,
+        n.w || 220,
+        n.h || 140
+      ]);
+
+      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `equipment_export_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+
+      createHistoryRecord("EXPORT", "CSVエクスポート", null, null, { count: activeNodes.length });
+      showToast("CSVをダウンロードしました", "success");
+    }
+
+    /* GitHub 正式保存 */
+    async function commitAndSaveToGitHub() {
+      // 整合性検証
+      const validationError = validateNodes(state.draftNodes);
+      if (validationError) {
+        showToast(`保存拒否: ${validationError}`, "error");
+        return;
+      }
+
+      if (!ghConfig.owner || !ghConfig.repo || !ghConfig.pat) {
+        showToast("GitHub設定が不十分です。左サイドバーでPATを設定してください", "error");
+        return;
+      }
+
+      try {
+        const filesStr = JSON.stringify(state.draftNodes, null, 2);
+        const historiesStr = JSON.stringify(state.histories, null, 2);
+
+        showToast("GitHubへ更新を送信中...", "info");
+
+        state.filesSha = await putGitHubFile('data/files.json', filesStr, state.filesSha, "Update equipment files");
+        state.historiesSha = await putGitHubFile('data/histories.json', historiesStr, state.historiesSha, "Update histories");
+
+        state.persistedNodes = JSON.parse(filesStr);
+        showToast("GitHubへ正常に保存されました", "success");
+      } catch (err) {
+        showToast(`GitHub保存エラー: ${err.message}`, "error");
+      }
+    }
+
+    function validateNodes(nodes) {
+      const idSet = new Set(nodes.map(n => n.id));
+      for (let n of nodes) {
+        if (n.parentId !== null && !idSet.has(n.parentId)) {
+          return `存在しない親ID (${n.parentId}) を参照しているデータがあります (ID:${n.id})`;
+        }
+        if (willCauseCycle(n.id, n.parentId)) {
+          return `フォルダ構成に循環参照が存在します (ID:${n.id})`;
+        }
+      }
+      return null;
+    }
+
+    /* 履歴作成 helper */
+    function createHistoryRecord(action, targetName, fileId, before, after) {
+      const newHist = {
+        id: state.histories.length > 0 ? Math.max(...state.histories.map(h => h.id || 0)) + 1 : 1,
+        fileId: fileId || null,
+        editor: "管理者",
+        action: action,
+        targetName: targetName || "不明",
+        before: before || null,
+        after: after || null,
+        createdAt: new Date().toISOString()
+      };
+      state.histories.unshift(newHist);
+    }
+
+    /* UI Helper */
+    function showToast(msg, type = "info") {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = msg;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    function parseTags(str) {
+      if (!str) return '';
+      return str.split(/[\s,]+/).map(t => t ? `<span class="tag tag-attr">${t}</span>` : '').join('');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>機材管理システム</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --header-bg: #1a2530;
+      --header-text: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-sub: #6b7280;
+      --border-color: #e5e7eb;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .header-title h1 { font-size: 1.25rem; font-weight: 700; }
+    .header-title p { font-size: 0.75rem; color: #9ca3af; }
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      text-decoration: none;
+    }
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    
+    .toolbar {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      z-index: 5;
+    }
+    .breadcrumbs { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
+    .crumb-item { color: var(--primary); cursor: pointer; }
+    .crumb-item:hover { text-decoration: underline; }
+    .crumb-sep { color: var(--text-sub); }
+    
+    .toolbar-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .search-box { position: relative; }
+    .search-box input {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      width: 200px;
+    }
+    .toggle-group { display: flex; border: 1px solid var(--border-color); border-radius: 0.375rem; overflow: hidden; }
+    .toggle-btn {
+      padding: 0.4rem 0.75rem;
+      background: #f3f4f6;
+      border: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+    .toggle-btn.active { background: var(--primary); color: white; font-weight: 600; }
+    
+    main { flex: 1; position: relative; overflow: hidden; display: flex; }
+    .view-container { width: 100%; height: 100%; overflow: auto; padding: 1.5rem; }
+    
+    /* 自由配置キャンバス */
+    .canvas-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      background-color: #e5e7eb;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 20px 20px;
+      cursor: grab;
+      user-select: none;
+    }
+    .canvas-viewport:active { cursor: grabbing; }
+    .canvas-world {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+    .node-card {
+      position: absolute;
+      background-color: var(--card-bg);
+      border-radius: 0.5rem;
+      box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      overflow: hidden;
+    }
+    .node-card:hover { border-color: var(--primary); }
+    .node-card.folder-node { background-color: #eff6ff; border-color: #bfdbfe; }
+    .node-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; word-break: break-all; }
+    .node-badge { font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 0.25rem; display: inline-block; width: fit-content; }
+    .badge-file { background-color: #e0e7ff; color: #3730a3; }
+    .badge-folder { background-color: #dbeafe; color: #1e40af; }
+    
+    /* リスト・グリッド */
+    .grid-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.25rem;
+    }
+    @media (max-width: 1024px) { .grid-view { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 640px) { .grid-view { grid-template-columns: repeat(2, 1fr); } }
+    
+    .item-card {
+      background: var(--card-bg);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border: 1px solid var(--border-color);
+    }
+    .item-card:hover { border-color: var(--primary); }
+    .item-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 0.25rem; background: #f3f4f6; }
+    
+    .list-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 0.5rem; overflow: hidden; box-shadow: var(--shadow); }
+    .list-table th, .list-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .list-table th { background-color: #f9fafb; font-weight: 600; font-size: 0.875rem; }
+    .list-table tr:hover { background-color: #f3f4f6; cursor: pointer; }
+    
+    .tag { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.75rem; background: #e5e7eb; margin-right: 0.25rem; }
+    .tag-attr { background: #fef3c7; color: #92400e; }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: white;
+      border-radius: 0.5rem;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+    .modal-close { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--text-sub); }
+    .modal-body { display: flex; flex-direction: column; gap: 0.75rem; }
+    .modal-body img { width: 100%; max-height: 200px; object-fit: contain; background: #f3f4f6; border-radius: 0.25rem; }
+    
+    .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem; }
+    .pagination button { padding: 0.3rem 0.6rem; border: 1px solid var(--border-color); background: white; cursor: pointer; border-radius: 0.25rem; }
+    .pagination button.active { background: var(--primary); color: white; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <h1>機材管理システム</h1>
+      <p>Broadcast Viewer</p>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="breadcrumbs" id="breadcrumbs"></div>
+    <div class="toolbar-controls">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="検索 (名称, 属性, 説明)...">
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnScopeDirect">直下</button>
+        <button class="toggle-btn" id="btnScopeAll">配下</button>
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnModeCanvas">自由配置</button>
+        <button class="toggle-btn" id="btnModeGrid">グリッド</button>
+        <button class="toggle-btn" id="btnModeList">リスト</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div id="viewCanvas" class="view-container" style="padding:0;">
+      <div class="canvas-viewport" id="canvasViewport">
+        <div class="canvas-world" id="canvasWorld"></div>
+      </div>
+    </div>
+    <div id="viewGrid" class="view-container" style="display:none;">
+      <div class="grid-view" id="gridContainer"></div>
+      <div class="pagination" id="gridPagination"></div>
+    </div>
+    <div id="viewList" class="view-container" style="display:none;">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>名称</th>
+            <th>種別</th>
+            <th>数量</th>
+            <th>属性</th>
+            <th>配置場所ID</th>
+          </tr>
+        </thead>
+        <tbody id="listTbody"></tbody>
+      </table>
+      <div class="pagination" id="listPagination"></div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">機材詳細</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      nodes: [],
+      currentParentId: null,
+      viewMode: "canvas", // canvas, grid, list
+      scope: "direct", // direct, all
+      searchQuery: "",
+      page: 1,
+      itemsPerPage: 60,
+      scale: 1,
+      panX: 0,
+      panY: 0,
+      isLayoutInteracting: false
+    };
+
+    // DOM Elements
+    const canvasViewport = document.getElementById('canvasViewport');
+    const canvasWorld = document.getElementById('canvasWorld');
+    const gridContainer = document.getElementById('gridContainer');
+    const listTbody = document.getElementById('listTbody');
+    const breadcrumbs = document.getElementById('breadcrumbs');
+    const searchInput = document.getElementById('searchInput');
+    const detailModal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    // Init
+    async function init() {
+      await loadData();
+      setupEventListeners();
+      render();
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('data/files.json');
+        if (res.ok) {
+          state.nodes = await res.json();
+        } else {
+          state.nodes = [];
+        }
+      } catch (e) {
+        console.error("Data load failed:", e);
+        state.nodes = [];
+      }
+    }
+
+    function setupEventListeners() {
+      // Toggle mode
+      document.getElementById('btnModeCanvas').addEventListener('click', () => setMode('canvas'));
+      document.getElementById('btnModeGrid').addEventListener('click', () => setMode('grid'));
+      document.getElementById('btnModeList').addEventListener('click', () => setMode('list'));
+
+      // Toggle scope
+      document.getElementById('btnScopeDirect').addEventListener('click', () => setScope('direct'));
+      document.getElementById('btnScopeAll').addEventListener('click', () => setScope('all'));
+
+      // Search
+      searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.trim().toLowerCase();
+        state.page = 1;
+        render();
+      });
+
+      // Modal close
+      modalClose.addEventListener('click', () => detailModal.classList.remove('active'));
+      detailModal.addEventListener('click', (e) => {
+        if (e.target === detailModal) detailModal.classList.remove('active');
+      });
+
+      // Canvas pan/zoom
+      setupCanvasPanZoom();
+    }
+
+    function setMode(mode) {
+      state.viewMode = mode;
+      document.querySelectorAll('.toggle-group button').forEach(b => {
+        if (['btnModeCanvas','btnModeGrid','btnModeList'].includes(b.id)) {
+          b.classList.remove('active');
+        }
+      });
+      if(mode==='canvas') document.getElementById('btnModeCanvas').classList.add('active');
+      if(mode==='grid') document.getElementById('btnModeGrid').classList.add('active');
+      if(mode==='list') document.getElementById('btnModeList').classList.add('active');
+
+      document.getElementById('viewCanvas').style.display = mode === 'canvas' ? 'block' : 'none';
+      document.getElementById('viewGrid').style.display = mode === 'grid' ? 'block' : 'none';
+      document.getElementById('viewList').style.display = mode === 'list' ? 'block' : 'none';
+
+      render();
+    }
+
+    function setScope(scope) {
+      state.scope = scope;
+      document.getElementById('btnScopeDirect').classList.toggle('active', scope === 'direct');
+      document.getElementById('btnScopeAll').classList.toggle('active', scope === 'all');
+      render();
+    }
+
+    function getFilteredNodes() {
+      let activeNodes = state.nodes.filter(n => !n.deletedAt);
+
+      if (state.searchQuery) {
+        return activeNodes.filter(n => 
+          (n.name && n.name.toLowerCase().includes(state.searchQuery)) ||
+          (n.attribute && n.attribute.toLowerCase().includes(state.searchQuery)) ||
+          (n.description && n.description.toLowerCase().includes(state.searchQuery))
+        );
+      }
+
+      if (state.scope === 'direct') {
+        return activeNodes.filter(n => n.parentId === state.currentParentId);
+      } else {
+        // all descendants
+        if (state.currentParentId === null) return activeNodes;
+        const descendants = new Set();
+        function collect(pId) {
+          activeNodes.filter(n => n.parentId === pId).forEach(n => {
+            descendants.add(n.id);
+            if (n.type === 'folder') collect(n.id);
+          });
+        }
+        collect(state.currentParentId);
+        return activeNodes.filter(n => descendants.has(n.id));
+      }
+    }
+
+    function render() {
+      renderBreadcrumbs();
+      const nodes = getFilteredNodes();
+
+      if (state.viewMode === 'canvas') {
+        renderCanvas(nodes);
+      } else if (state.viewMode === 'grid') {
+        renderGrid(nodes);
+      } else if (state.viewMode === 'list') {
+        renderList(nodes);
+      }
+    }
+
+    function renderBreadcrumbs() {
+      breadcrumbs.innerHTML = '';
+      const rootCrumb = document.createElement('span');
+      rootCrumb.className = 'crumb-item';
+      rootCrumb.textContent = 'ルート';
+      rootCrumb.onclick = () => { state.currentParentId = null; render(); };
+      breadcrumbs.appendChild(rootCrumb);
+
+      if (state.currentParentId !== null) {
+        const path = [];
+        let curr = state.nodes.find(n => n.id === state.currentParentId);
+        while (curr) {
+          path.unshift(curr);
+          curr = state.nodes.find(n => n.id === curr.parentId);
+        }
+        path.forEach(folder => {
+          const sep = document.createElement('span');
+          sep.className = 'crumb-sep';
+          sep.textContent = '>';
+          breadcrumbs.appendChild(sep);
+
+          const item = document.createElement('span');
+          item.className = 'crumb-item';
+          item.textContent = folder.name;
+          item.onclick = () => { state.currentParentId = folder.id; render(); };
+          breadcrumbs.appendChild(item);
+        });
+      }
+    }
+
+    /* 自由配置キャンバス */
+    function renderCanvas(nodes) {
+      canvasWorld.innerHTML = '';
+      // Canvas Mode only displays direct children of currentParentId
+      const canvasNodes = state.nodes.filter(n => !n.deletedAt && n.parentId === state.currentParentId);
+
+      canvasNodes.forEach(node => {
+        const el = document.createElement('div');
+        el.className = `node-card ${node.type === 'folder' ? 'folder-node' : ''}`;
+        el.style.left = `${node.x || 0}px`;
+        el.style.top = `${node.y || 0}px`;
+        el.style.width = `${node.w || 220}px`;
+        el.style.height = `${node.h || 140}px`;
+
+        const title = document.createElement('div');
+        title.className = 'node-title';
+        title.textContent = node.name;
+
+        const badge = document.createElement('span');
+        badge.className = `node-badge ${node.type === 'folder' ? 'badge-folder' : 'badge-file'}`;
+        badge.textContent = node.type === 'folder' ? 'フォルダ' : `数量: ${node.quantity || 1}`;
+
+        el.appendChild(title);
+        if (node.attribute) {
+          const attr = document.createElement('div');
+          attr.innerHTML = parseTags(node.attribute);
+          el.appendChild(attr);
+        }
+        el.appendChild(badge);
+
+        el.onclick = (e) => {
+          if (state.isLayoutInteracting) return;
+          e.stopPropagation();
+          if (node.type === 'folder') {
+            state.currentParentId = node.id;
+            render();
+          } else {
+            showDetailModal(node);
+          }
+        };
+
+        canvasWorld.appendChild(el);
+      });
+
+      updateCanvasTransform();
+    }
+
+    function updateCanvasTransform() {
+      canvasWorld.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.scale})`;
+    }
+
+    function setupCanvasPanZoom() {
+      let isPanning = false;
+      let startX, startY;
+      let initialPinchDist = null;
+      let initialScale = 1;
+
+      canvasViewport.addEventListener('pointerdown', (e) => {
+        if (e.target !== canvasViewport && e.target !== canvasWorld) return;
+        isPanning = true;
+        startX = e.clientX - state.panX;
+        startY = e.clientY - state.panY;
+      });
+
+      window.addEventListener('pointermove', (e) => {
+        if (!isPanning) return;
+        state.panX = e.clientX - startX;
+        state.panY = e.clientY - startY;
+        updateCanvasTransform();
+      });
+
+      window.addEventListener('pointerup', () => { isPanning = false; });
+
+      canvasViewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = 1.1;
+        let newScale = e.deltaY < 0 ? state.scale * zoomFactor : state.scale / zoomFactor;
+        newScale = Math.min(Math.max(0.25, newScale), 3.0);
+
+        const rect = canvasViewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        state.panX = mouseX - (mouseX - state.panX) * (newScale / state.scale);
+        state.panY = mouseY - (mouseY - state.panY) * (newScale / state.scale);
+        state.scale = newScale;
+        updateCanvasTransform();
+      }, { passive: false });
+
+      // Pinch zoom
+      canvasViewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          initialPinchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialScale = state.scale;
+        }
+      });
+
+      canvasViewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialPinchDist) {
+          const currentDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          let newScale = initialScale * (currentDist / initialPinchDist);
+          newScale = Math.min(Math.max(0.25, newScale), 3.0);
+          state.scale = newScale;
+          updateCanvasTransform();
+        }
+      });
+
+      canvasViewport.addEventListener('touchend', () => { initialPinchDist = null; });
+    }
+
+    /* グリッド表示 */
+    function renderGrid(nodes) {
+      gridContainer.innerHTML = '';
+      const start = (state.page - 1) * state.itemsPerPage;
+      const paginated = nodes.slice(start, start + state.itemsPerPage);
+
+      paginated.forEach(node => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+
+        if (node.type === 'file' && node.image) {
+          const img = document.createElement('img');
+          img.src = node.image.startsWith('http') ? node.image : `images/${node.image}`;
+          img.onerror = () => { img.style.display = 'none'; };
+          card.appendChild(img);
+        }
+
+        const title = document.createElement('div');
+        title.style.fontWeight = '700';
+        title.textContent = node.name;
+        card.appendChild(title);
+
+        const meta = document.createElement('div');
+        meta.style.fontSize = '0.8rem';
+        meta.style.color = 'var(--text-sub)';
+        meta.textContent = node.type === 'folder' ? '[フォルダ]' : `数量: ${node.quantity || 1}`;
+        card.appendChild(meta);
+
+        if (node.attribute) {
+          const attr = document.createElement('div');
+          attr.innerHTML = parseTags(node.attribute);
+          card.appendChild(attr);
+        }
+
+        card.onclick = () => {
+          if (node.type === 'folder') {
+            state.currentParentId = node.id;
+            render();
+          } else {
+            showDetailModal(node);
+          }
+        };
+
+        gridContainer.appendChild(card);
+      });
+
+      renderPagination('gridPagination', nodes.length);
+    }
+
+    /* リスト表示 */
+    function renderList(nodes) {
+      listTbody.innerHTML = '';
+      const start = (state.page - 1) * state.itemsPerPage;
+      const paginated = nodes.slice(start, start + state.itemsPerPage);
+
+      paginated.forEach(node => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${node.id}</td>
+          <td style="font-weight:600;">${node.type === 'folder' ? '📁 ' : '📄 '}${node.name}</td>
+          <td>${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</td>
+          <td>${node.type === 'folder' ? '-' : (node.quantity || 1)}</td>
+          <td>${parseTags(node.attribute || '')}</td>
+          <td>${node.parentId !== null ? node.parentId : 'ルート'}</td>
+        `;
+
+        tr.onclick = () => {
+          if (node.type === 'folder') {
+            state.currentParentId = node.id;
+            render();
+          } else {
+            showDetailModal(node);
+          }
+        };
+
+        listTbody.appendChild(tr);
+      });
+
+      renderPagination('listPagination', nodes.length);
+    }
+
+    function renderPagination(containerId, totalItems) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      const totalPages = Math.ceil(totalItems / state.itemsPerPage);
+      if (totalPages <= 1) return;
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === state.page) btn.className = 'active';
+        btn.onclick = () => { state.page = i; render(); };
+        container.appendChild(btn);
+      }
+    }
+
+    function parseTags(str) {
+      if (!str) return '';
+      return str.split(/[\s,]+/).map(t => {
+        if (!t) return '';
+        return `<span class="tag tag-attr">${t}</span>`;
+      }).join('');
+    }
+
+    function showDetailModal(node) {
+      modalTitle.textContent = `${node.name} (${node.type === 'folder' ? 'フォルダ' : '詳細'})`;
+      let imgHtml = '';
+      if (node.image) {
+        const src = node.image.startsWith('http') ? node.image : `images/${node.image}`;
+        imgHtml = `<img src="${src}" alt="${node.name}" onerror="this.style.display='none'">`;
+      }
+
+      modalBody.innerHTML = `
+        ${imgHtml}
+        <p><strong>ID:</strong> ${node.id}</p>
+        <p><strong>種別:</strong> ${node.type === 'folder' ? 'フォルダ' : '機材/ファイル'}</p>
+        <p><strong>配置場所ID:</strong> ${node.parentId !== null ? node.parentId : 'ルート'}</p>
+        <p><strong>数量:</strong> ${node.quantity || 1}</p>
+        <p><strong>属性:</strong> ${parseTags(node.attribute || '')}</p>
+        <p><strong>説明:</strong> ${node.description || 'なし'}</p>
+        <p><strong>座標・サイズ:</strong> X:${node.x || 0}, Y:${node.y || 0}, W:${node.w || 220}, H:${node.h || 140}</p>
+      `;
+
+      detailModal.classList.add('active');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+[
+  {
+    "id": 9,
+    "fileId": 91,
+    "editor": "管理者",
+    "action": "LAYOUT_UPDATE",
+    "targetName": "新規機材①",
+    "before": {
+      "x": 451,
+      "y": 31
+    },
+    "after": {
+      "x": 772,
+      "y": 32
+    },
+    "createdAt": "2026-08-12T09:33:20.552Z"
+  },
+  {
+    "id": 8,
+    "fileId": 91,
+    "editor": "管理者",
+    "action": "LAYOUT_UPDATE",
+    "targetName": "新規機材①",
+    "before": {
+      "w": 220,
+      "h": 140
+    },
+    "after": {
+      "w": 490,
+      "h": 80
+    },
+    "createdAt": "2026-08-12T09:33:16.279Z"
+  },
+  {
+    "id": 7,
+    "fileId": 91,
+    "editor": "管理者",
+    "action": "LAYOUT_UPDATE",
+    "targetName": "新規機材①",
+    "before": {
+      "x": 50,
+      "y": 50
+    },
+    "after": {
+      "x": 451,
+      "y": 31
+    },
+    "createdAt": "2026-08-12T09:33:07.376Z"
+  },
+  {
+    "id": 6,
+    "fileId": 91,
+    "editor": "管理者",
+    "action": "CREATE",
+    "targetName": "新規機材①",
+    "before": null,
+    "after": {
+      "id": 91,
+      "name": "新規機材①",
+      "type": "file",
+      "quantity": 1,
+      "attribute": "",
+      "description": "",
+      "image": "",
+      "parentId": 1,
+      "x": 772,
+      "y": 32,
+      "w": 490,
+      "h": 80,
+      "deletedAt": null,
+      "createdAt": "2026-08-12T09:33:00.345Z",
+      "updatedAt": "2026-08-12T09:33:00.345Z"
+    },
+    "createdAt": "2026-08-12T09:33:00.345Z"
+  },
+  {
+    "id": 5,
+    "fileId": 16,
+    "editor": "管理者",
+    "action": "LAYOUT_UPDATE",
+    "targetName": "放送室",
+    "before": {
+      "x": 340,
+      "y": 40
+    },
+    "after": {
+      "x": 362,
+      "y": 41
+    },
+    "createdAt": "2026-08-12T09:32:43.881Z"
+  },
+  {
+    "id": 4,
+    "fileId": null,
+    "editor": "管理者",
+    "action": "IMPORT",
+    "targetName": "CSV一括インポート",
+    "before": null,
+    "after": {
+      "count": 90
+    },
+    "createdAt": "2026-08-12T09:32:36.071Z"
+  },
+  {
+    "id": 3,
+    "fileId": 1,
+    "editor": "管理者",
+    "action": "UPDATE",
+    "targetName": "放送室",
+    "before": {
+      "id": 1,
+      "name": "メインスタジオ",
+      "type": "folder",
+      "quantity": 0,
+      "attribute": "#スタジオ #一階",
+      "description": "主要な放送機材が設置されているメインルーム",
+      "image": "",
+      "parentId": null,
+      "x": 40,
+      "y": 40,
+      "w": 300,
+      "h": 200,
+      "deletedAt": null,
+      "createdAt": "2026-01-10T09:00:00Z",
+      "updatedAt": "2026-01-10T09:00:00Z"
+    },
+    "after": {
+      "id": 1,
+      "name": "放送室",
+      "type": "folder",
+      "quantity": 0,
+      "attribute": "#スタジオ #一階",
+      "description": "主要な放送機材が設置されているメインルーム",
+      "image": "",
+      "parentId": null,
+      "x": 40,
+      "y": 40,
+      "w": 300,
+      "h": 200,
+      "deletedAt": null,
+      "createdAt": "2026-01-10T09:00:00Z",
+      "updatedAt": "2026-08-12T08:06:55.725Z"
+    },
+    "createdAt": "2026-08-12T08:06:55.726Z"
+  },
+  {
+    "id": 1,
+    "fileId": 1,
+    "editor": "管理者",
+    "action": "CREATE",
+    "targetName": "メインスタジオ",
+    "before": null,
+    "after": {
+      "id": 1,
+      "name": "メインスタジオ",
+      "type": "folder"
+    },
+    "createdAt": "2026-01-10T09:00:00Z"
+  },
+  {
+    "id": 2,
+    "fileId": 2,
+    "editor": "管理者",
+    "action": "CREATE",
+    "targetName": "デジタルミキサー X32",
+    "before": null,
+    "after": {
+      "id": 2,
+      "name": "デジタルミキサー X32",
+      "type": "file",
+      "quantity": 1
+    },
+    "createdAt": "2026-01-10T09:15:00Z"
+  }
+]
